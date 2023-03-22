@@ -1,8 +1,7 @@
-import expres from 'express'
-const app = expres();
+import express from 'express'
+const app = express();
+
 import cors from 'cors'
-
-
 app.use(cors())
 
 class CivitAiResponse {
@@ -24,13 +23,24 @@ class CivitAiResponse {
       .replace('filename=', '')
       .trim()
       .replaceAll('"','')
-    ;
+    
   }
   getFileCode() {
     const splittedUrl = this.url.split('/')
-    const fileCode = splittedUrl[splittedUrl.length - 1]
+    return splittedUrl[splittedUrl.length - 1]
+  }
+  getFileExtension() { 
+    const splittedUrl = this.headers
+    .get('content-disposition')
+    .split(';')
+    .find(n => n.includes('filename='))
+    .replace('filename=', '')
+    .trim()
+    .replaceAll('"','')
+    .split('.')
+    
+    return splittedUrl[splittedUrl.length - 1]      
 
-    return fileCode;
   }
 }
 
@@ -60,8 +70,9 @@ app.get('/civitai/getDetails', (req, res) => {
       const response = await fetch(endp)       
       const filename = new CivitAiResponse({response}).getFilename()
       const fileCode = new CivitAiResponse({ url:endp }).getFileCode()
+      const fileExtension = new CivitAiResponse({ response }).getFileExtension()
       
-      res.send({filename, fileCode}) 
+      res.send({filename, fileCode, fileExtension}) 
     })(href)
 
   } catch (err) {
@@ -76,7 +87,3 @@ app.get('/civitai/getDetails', (req, res) => {
 })
 app.listen(process.env.PORT || 3000)
 
-
-// const url = new URL('https://civitai.com/api/download/models/19084')
-
-// console.log(url.pathname)
